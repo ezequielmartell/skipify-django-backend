@@ -1,8 +1,25 @@
 services:
-  postgres:
-    image: "postgres:16.2"
+  web:
+    build: .
+    command: gunicorn django-aws.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+        - .:/code
+    # env_file:
+    #     - ./.env
     ports:
-      - "5433:5432"
+        - 8000:8000
+    depends_on:
+        - db
+        # - redis
+  db:
+    image: "postgres:14.2"
+    ports:
+      - 5432:5432
+    volumes:
+            - postgres_data:/var/lib/postgresql/data/
     environment:
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: "django_aws"
+
+volumes:
+  postgres_data:

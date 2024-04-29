@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -87,13 +88,14 @@ WSGI_APPLICATION = 'django_aws.wsgi.application'
 # }
 
 DATABASES = {
-    'default': env.db(default="postgresql://postgres:postgres@127.0.0.1:5433/django_aws")
+    # 'default': env.db()
+    'default': env.db(default="postgresql://postgres:postgres@db:5432/django_aws")
 }
 
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators 
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -126,9 +128,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "static"
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# docker build . -t 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest
+# docker push 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest
