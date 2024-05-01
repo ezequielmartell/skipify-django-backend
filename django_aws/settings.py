@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent
+FRONTEND_DIR = FRONTEND_DIR.joinpath('django-aws-frontend')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 env = environ.Env()
 env_path = BASE_DIR / ".env"
 if env_path.is_file():
@@ -26,13 +28,12 @@ if env_path.is_file():
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-i%!!rd=q74+t_77a#d1wdn^5grng7j@vfp)vv=_hdwr!c(xe)@'
+SECRET_KEY = env("SECRET_KEY", default="ewfi83f2ofee3398fh2ofno24f")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG", cast=bool, default=True)
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", cast=list, default=["*"])
 
 # Application definition
 
@@ -43,12 +44,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
     'accounts',
+    'api',
 ]
 
 MIDDLEWARE = [
+    'django_aws.middleware.health_check_middleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -61,7 +67,7 @@ ROOT_URLCONF = 'django_aws.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [FRONTEND_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,6 +82,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_aws.wsgi.application'
 
+CSRF_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
+SESSION_COOKIE_HTTPONLY = True
+
+# PROD ONLY
+CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", cast=bool, default=False)
+SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", cast=bool, default=False)
+
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", cast=list, default=[""])
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -89,10 +106,8 @@ WSGI_APPLICATION = 'django_aws.wsgi.application'
 
 DATABASES = {
     # 'default': env.db()
-    'default': env.db(default="postgresql://postgres:postgres@db:5432/django_aws")
+    'default': env.db(default="postgresql://postgres:postgres@local.spotify.ezdoes.xyz:5432/django_aws")
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators 
@@ -130,12 +145,29 @@ USE_TZ = True
 
 # STATIC_URL = 'static/'
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "static"
-
+# STATIC_ROOT = BASE_DIR / "static"
+STATICFILES_DIRS = (
+    FRONTEND_DIR.joinpath('build/static'),  # new
+)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# docker build . -t 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest
-# docker push 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest
+
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="sqs://localhost:9324")
+CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="default")
+CELERY_IMPORTS = (
+'django_aws.tasks',
+)
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "region": env("AWS_REGION", default="us-east-1")
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "beat_task": {
+        "task": "django_aws.tasks.sync_boycott_tasks",
+        "schedule": 60.0,
+    },
+}

@@ -15,8 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.shortcuts import render
+from django.urls import path, include
+
+admin.site.site_header = "Skipper Django Admin Panel"
+
+def index_view(request):
+    return render(request, 'build/index.html')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('staff/', admin.site.urls),
+    path('api/', include('api.urls')),
+    path('', index_view, name='index'),
+    path('callback/', index_view, name='index'),
+    path('home/', index_view, name='index'),
 ]
+urlpatterns += staticfiles_urlpatterns()

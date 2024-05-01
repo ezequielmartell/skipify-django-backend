@@ -1,16 +1,23 @@
 services:
   web:
-    build: .
-    command: gunicorn django-aws.wsgi:application --bind 0.0.0.0:8000
+    build: 
+      context: /root/aws-infrastructure/django-aws
+      dockerfile: /root/aws-infrastructure/django-aws/django-aws-backend/Dockerfile
+    command: gunicorn django_aws.wsgi:application --bind 0.0.0.0:80
     volumes:
         - .:/code
     # env_file:
     #     - ./.env
     ports:
-        - 8000:8000
+        - 80:80
     depends_on:
         - db
-        # - redis
+        - sqs
+  sqs:
+    image: "softwaremill/elasticmq-native:latest"
+    ports:
+      - "9324:9324"
+      - "9325:9325"
   db:
     image: "postgres:14.2"
     ports:

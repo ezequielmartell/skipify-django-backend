@@ -1,28 +1,31 @@
 FROM python:3.10-slim-buster
 
-# Open http port
 EXPOSE 8000
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update -y && \
-    apt-get install -y netcat 
+RUN apt-get update  \
+    && apt-get --no-install-recommends install -y \
+        build-essential \
+        libssl-dev \
+        libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install pip and gunicorn web server
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install gunicorn==20.1.0
+# RUN pip install gunicorn==20.1.0
 
-# Install requirements.txt
-COPY requirements.txt /
+COPY django-aws-backend/requirements.txt /
 RUN pip install --no-cache-dir -r /requirements.txt
 
-# Moving application files
 WORKDIR /app
-COPY . /app
+COPY django-aws-backend /app
+# COPY . /app
+ADD django-aws-frontend/build /django-aws-frontend/build
+# /root/aws-infrastructure/django-aws/django-aws-backend/manage.py
+RUN python manage.py collectstatic --noinput
 
-# RUN ./manage.py collectstatic --noinput
 
 RUN chmod +x ./entrypoint.sh
 
