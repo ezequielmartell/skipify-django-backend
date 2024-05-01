@@ -37,10 +37,8 @@ def authorizecode(id, code):
         'code': code,
         'redirect_uri': REDIRECT_URI,
     }
-    print(f"*****************************{payload}")
     res = requests.post(TOKEN_URL, auth=(CLIENT_ID, CLIENT_SECRET), data=payload)
     res_data = res.json()
-    print(f"*****res_data***{res_data}")
     
     user = CustomUser.objects.get(id=id)
     user.refresh_token = res_data.get('refresh_token')
