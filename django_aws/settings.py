@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django_aws.middleware.health_check_middleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,7 +92,7 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", cast=bool, default=False)
 SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", cast=bool, default=False)
 
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", cast=list, default=[""])
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", cast=list, default=["*"])
 
 
 # Database
@@ -106,7 +107,7 @@ CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", cast=list, default=[""])
 
 DATABASES = {
     # 'default': env.db()
-    'default': env.db(default="postgresql://postgres:postgres@local.spotify.ezdoes.xyz:5432/django_aws")
+    'default': env.db(default="postgresql://postgres:postgres@db:5432/django_aws")
 }
 
 # Password validation
