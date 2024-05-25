@@ -1,0 +1,125 @@
+services:
+  traefik:
+    image: "traefik:v3.0"
+    container_name: "traefik"
+    command:
+      # - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      # uncomment line below for cert testing
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=ssl@thinkmartell.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    labels:
+      - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
+    restart: "unless-stopped"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  whoami:
+    image: "traefik/whoami"
+    container_name: "whoami"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.ezdoes.xyz`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+    restart: "unless-stopped"
+  skipify:
+    build: 
+      context: /root/aws-infrastructure/django-aws
+      dockerfile: /root/aws-infrastructure/django-aws/django-aws-backend/Dockerfile
+    # container_name: "skipify"
+    command: gunicorn django_aws.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+        - .:/code
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.skipify.rule=Host(`skipify.ezdoes.xyz`)"
+      - "traefik.http.services.skipify.loadbalancer.server.port=8000"
+      - "traefik.http.routers.skipify.entrypoints=websecure"
+      - "traefik.http.routers.skipify.tls.certresolver=myresolver"
+    expose:
+        - 8000
+    restart: "unless-stopped"
+    depends_on:
+        - db
+        - sqs
+  celery:
+    build: 
+      context: /root/aws-infrastructure/django-aws
+      dockerfile: /root/aws-infrastructure/django-aws/django-aws-backend/Dockerfile
+    command: celery -A django_aws worker --loglevel=info -B
+    volumes:
+      - .:/code
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - sqs
+      - skipify
+  sqs:
+    image: "softwaremill/elasticmq-native:latest"
+    restart: "unless-stopped"
+    ports:
+      - 9324:9324
+      - 9325:9325
+  db:
+    image: "postgres:14.2"
+    restart: "unless-stopped"
+    expose:
+      - 5432
+    volumes:
+            - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "django_aws"
+
+volumes:
+  postgres_data:
+
+
+# services:
+
+#   traefik:
+#     image: "traefik:v3.0"
+#     container_name: "traefik"
+#     command:
+#       #- "--log.level=DEBUG"
+#       - "--api.insecure=true"
+#       - "--providers.docker=true"
+#       - "--providers.docker.exposedbydefault=false"
+#       - "--entryPoints.web.address=:80"
+#       - "--entryPoints.websecure.address=:443"
+#       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+#       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+#       #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+#       - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
+#       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#       - "8080:8080"
+#     volumes:
+#       - "./letsencrypt:/letsencrypt"
+#       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+#   whoami:
+#     image: "traefik/whoami"
+#     container_name: "simple-service"
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
+#       - "traefik.http.routers.whoami.entrypoints=websecure"
+#       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
