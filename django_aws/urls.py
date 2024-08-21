@@ -30,5 +30,6 @@ urlpatterns = [
     path('', index_view, name='index'),
     path('callback/', index_view, name='index'),
     path('home/', index_view, name='index'),
+    path('signup/', index_view, name='index'),
 ]
 urlpatterns += staticfiles_urlpatterns()

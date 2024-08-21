@@ -13,8 +13,32 @@ from . import spotify
 import requests
 import time
 import secrets
-import json
 import string
+
+@api_view(['POST'])
+def signup_view(request):
+    # data = json.loads(request.data)
+    data = request.data
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    if username is None or username is "" or password is None or password is "" or email is None or email is "":
+        return Response({'message': 'Please provide email, username, and password.'}, status=400)
+
+    if CustomUser.objects.filter(username = username):
+        return Response({'message': 'Username already exists.'}, status=400)
+    
+    if CustomUser.objects.filter(email = email):
+        return Response({'message': 'Email already exists.'}, status=400)
+    
+    if len(password) < 8:
+        return Response({'message': 'Password must be at least 8 characters.'}, status=400)
+    
+    user = CustomUser.objects.create_user(username=username, password=password, email=email)
+
+    login(request, user)
+    return Response({'message': 'Successfully logged in.'})
+
 
 @api_view(['POST'])
 def login_view(request):
@@ -22,24 +46,24 @@ def login_view(request):
     data = request.data
     username = data.get('username')
     password = data.get('password')
-    if username is None or password is None:
-        return JsonResponse({'detail': 'Please provide username and password.'}, status=400)
+    if username is None or username is "" or password is None or password is "":
+        return Response({'message': 'Please provide username and password.'}, status=400)
 
     user = authenticate(username=username, password=password)
 
     if user is None:
-        return JsonResponse({'detail': 'Invalid credentials.'}, status=400)
+        return Response({'message': 'Invalid credentials.'}, status=400)
 
     login(request, user)
-    return JsonResponse({'detail': 'Successfully logged in.'})
+    return Response({'message': 'Successfully logged in.'})
 
 
 def logout_view(request):
     if not request.user.is_authenticated:
-        return JsonResponse({'detail': 'You\'re not logged in.'}, status=400)
+        return Response({'message': 'You\'re not logged in.'}, status=400)
 
     logout(request)
-    return JsonResponse({'detail': 'Successfully logged out.'})
+    return Response({'message': 'Successfully logged out.'})
 
 
 @ensure_csrf_cookie
