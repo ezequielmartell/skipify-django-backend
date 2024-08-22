@@ -57,7 +57,7 @@ def login_view(request):
     login(request, user)
     return Response({'message': 'Successfully logged in.'})
 
-
+@api_view(['GET'])
 def logout_view(request):
     if not request.user.is_authenticated:
         return Response({'message': 'You\'re not logged in.'}, status=400)
@@ -65,13 +65,13 @@ def logout_view(request):
     logout(request)
     return Response({'message': 'Successfully logged out.'})
 
-
+@api_view(['GET'])
 @ensure_csrf_cookie
 def session_view(request):
     if not request.user.is_authenticated:
-        return JsonResponse({'isAuthenticated': False})
+        return Response({'isAuthenticated': False}, content_type='application/json')
 
-    return JsonResponse({'isAuthenticated': True})
+    return Response({'isAuthenticated': True}, content_type='application/json')
 
 
 @api_view(['GET', 'POST'])
