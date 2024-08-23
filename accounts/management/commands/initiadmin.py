@@ -7,11 +7,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if CustomUser.objects.count() == 0:
-            username = "admin"
             email = "admin@thinkmartell.com"
             password = 'admin'
-            print('Creating account for %s (%s)' % (username, email))
-            admin = CustomUser.objects.create_superuser(email=email, username=username, password=password)
+            print(f"Creating account for {email}")
+            admin = CustomUser.objects.create_superuser(email=email, password=password)
             # admin.is_active = True
             # admin.is_admin = True
             admin.save()

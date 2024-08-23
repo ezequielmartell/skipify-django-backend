@@ -5,6 +5,7 @@
 # done
 # echo 'PostgreSQL started'
 
+python manage.py makemigrations
 echo 'Running migrations...'
 python manage.py migrate
 echo 'Initializing an Admin if no users exist'

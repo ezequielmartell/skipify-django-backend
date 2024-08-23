@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r /requirements.txt
 WORKDIR /app
 COPY django-aws-backend /app
 # COPY . /app
-ADD django-aws-frontend/build /django-aws-frontend/build
+COPY django-aws-frontend/build /django-aws-frontend/build
 # /root/aws-infrastructure/django-aws/django-aws-backend/manage.py
 RUN python manage.py collectstatic --noinput
 

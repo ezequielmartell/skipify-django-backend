@@ -1,12 +1,12 @@
-from django.http import JsonResponse
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.core.mail import send_mail
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from accounts.models import CustomUser
 from urllib.parse import urlencode
 from . import spotify
@@ -17,26 +17,44 @@ import string
 
 @api_view(['POST'])
 def signup_view(request):
-    # data = json.loads(request.data)
     data = request.data
-    username = data.get('username')
     password = data.get('password')
-    email = data.get('email')
-    if username is None or username is "" or password is None or password is "" or email is None or email is "":
-        return Response({'message': 'Please provide email, username, and password.'}, status=400)
+    email = data.get('email').lower()
 
-    if CustomUser.objects.filter(username = username):
-        return Response({'message': 'Username already exists.'}, status=400)
+    # if password is None or password == "" or email is None or email == "":
+    #     return Response({'message': 'Please provide email, username, and password.'}, status=400)
+
+    try:
+        validate_email(email)
+    except ValidationError as error:
+        return Response({'message': error}, status=400)
+
+    # if CustomUser.objects.filter(username = username):
+    #     return Response({'message': 'Username already exists.'}, status=400)
     
-    if CustomUser.objects.filter(email = email):
-        return Response({'message': 'Email already exists.'}, status=400)
+    # if CustomUser.objects.filter(email = email):
+    #     return Response({'message': 'Email already exists.'}, status=400)
     
     if len(password) < 8:
         return Response({'message': 'Password must be at least 8 characters.'}, status=400)
     
-    user = CustomUser.objects.create_user(username=username, password=password, email=email)
+    try:
+        user = CustomUser.objects.create_user( email=email, password=password)
+    except Exception as error:
+        return Response({'message': f"Error creating user: {error}"}, status=400)
 
     login(request, user)
+    # send_mail('Subject here', 'Here is the message.', 'from@example.com', ['to@example.com'], fail_silently=False)
+    send_mail(
+        subject='Welcome to Skipify!', 
+        message="Thank you for signing up! We are excited to have you on board.\n"
+        "Please let us know if you have any questions or feedback.\n\n"
+        f"Username: {email}\n"
+        "Best,\nThe Skipify Team",
+        from_email='bot@thinkmartell.com',
+        recipient_list=[email], 
+        fail_silently=False
+        )
     return Response({'message': 'Successfully logged in.'})
 
 
@@ -44,12 +62,14 @@ def signup_view(request):
 def login_view(request):
     # data = json.loads(request.data)
     data = request.data
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
-    if username is None or username is "" or password is None or password is "":
-        return Response({'message': 'Please provide username and password.'}, status=400)
-
-    user = authenticate(username=username, password=password)
+    # if email is None or email == "" or password is None or password == "":
+    #     return Response({'message': 'Please provide username and password.'}, status=400)
+    try:
+        user = authenticate(username=email, password=password)
+    except Exception as error:
+        return Response({'message': error}, status=400)
 
     if user is None:
         return Response({'message': 'Invalid credentials.'}, status=400)
