@@ -7,6 +7,7 @@ __pycache__
 static
 media
 celerybeat-schedule
+docker-compose.yml
 
 # Created by https://www.toptal.com/developers/gitignore/api/django,react,visualstudiocode,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=django,react,visualstudiocode,linux

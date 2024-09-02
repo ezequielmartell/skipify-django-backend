@@ -14,21 +14,15 @@ RUN apt-get update  \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
-# RUN pip install gunicorn==20.1.0
 
 COPY django-aws-backend/requirements.txt /
 RUN pip install --no-cache-dir -r /requirements.txt
 
 WORKDIR /app
 COPY django-aws-backend /app
-# COPY . /app
 COPY django-aws-frontend/build /django-aws-frontend/build
-# /root/aws-infrastructure/django-aws/django-aws-backend/manage.py
 RUN python manage.py collectstatic --noinput
 
-
 RUN chmod +x ./entrypoint.sh
-
-# COPY . .
 
 ENTRYPOINT ["./entrypoint.sh"]
