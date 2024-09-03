@@ -14,8 +14,3 @@ echo 'Collecting static files...'
 python manage.py collectstatic --no-input
 
 exec "$@"
-
-
-# aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 637423655132.dkr.ecr.us-east-2.amazonaws.com
-# docker build . -t 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest
-# docker push 637423655132.dkr.ecr.us-east-2.amazonaws.com/django-aws-backend:latest

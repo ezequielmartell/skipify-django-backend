@@ -20,8 +20,8 @@ RUN pip install --no-cache-dir -r /requirements.txt
 
 WORKDIR /app
 COPY django-aws-backend /app
-COPY django-aws-frontend/build /django-aws-frontend/build
-RUN python manage.py collectstatic --noinput
+# COPY django-aws-frontend/build /django-aws-frontend/build
+# RUN python manage.py collectstatic --noinput
 
 RUN chmod +x ./entrypoint.sh
 

@@ -21,15 +21,17 @@ from django.urls import path, include
 
 admin.site.site_header = "Skipper Django Admin Panel"
 
-def index_view(request):
-    return render(request, 'build/index.html')
+# def index_view(request):
+#     return render(request, 'build/index.html')
 
 urlpatterns = [
     path('staff/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('', index_view, name='index'),
-    path('callback/', index_view, name='index'),
-    path('home/', index_view, name='index'),
-    path('signup/', index_view, name='index'),
 ]
+
+#     path('', index_view, name='index'),
+#     path('callback/', index_view, name='index'),
+#     path('home/', index_view, name='index'),
+#     path('signup/', index_view, name='index'),
+# ]
 urlpatterns += staticfiles_urlpatterns()

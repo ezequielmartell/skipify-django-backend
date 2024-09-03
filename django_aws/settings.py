@@ -33,7 +33,7 @@ SECRET_KEY = env("SECRET_KEY", default="ewfi83f2ofee3398fh2ofno24f")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG", cast=bool, default=True)
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", cast=list, default=["*"])
+ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOSTS", default="*")]
 
 # Application definition
 
@@ -53,7 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django_aws.middleware.health_check_middleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -89,11 +89,11 @@ CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookie
 SESSION_COOKIE_HTTPONLY = True
 
 # PROD ONLY
-CSRF_COOKIE_SECURE = env("CSRF_COOKIE_SECURE", cast=bool, default=False)
-SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE", cast=bool, default=False)
+CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", default=False)
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", default=False)
 
-CSRF_TRUSTED_ORIGINS = ["https://skipify.ezdoes.xyz"]
-
+if os.environ.get("CSRF_TRUSTED_ORIGIN"):
+    CSRF_TRUSTED_ORIGINS = [os.environ.get("CSRF_TRUSTED_ORIGIN")]
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -107,7 +107,7 @@ CSRF_TRUSTED_ORIGINS = ["https://skipify.ezdoes.xyz"]
 
 DATABASES = {
     # 'default': env.db()
-    'default': env.db(default="postgresql://postgres:postgres@db:5432/django_aws")
+    'default': env.db(default="sqlite:///db.sqlite3")
 }
 
 # Password validation
@@ -144,13 +144,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-# STATIC_URL = 'static/'
+# # STATIC_URL = 'static/'
 STATIC_URL = '/static/'
-# STATIC_ROOT = BASE_DIR / "static"
-STATICFILES_DIRS = (
-    FRONTEND_DIR.joinpath('build/static'),  # new
-)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# # STATIC_ROOT = BASE_DIR / "static"
+# STATICFILES_DIRS = (
+#     FRONTEND_DIR.joinpath('build/static'),  # new
+# )
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Default primary key field type
@@ -173,10 +173,8 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-SENDGRID_API_KEY = env('SENDGRID_API_KEY')
-
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_HOST_USER = 'apikey' # this is exactly the value 'apikey'
-EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
