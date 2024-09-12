@@ -15,11 +15,11 @@ RUN apt-get update  \
 
 RUN pip install --no-cache-dir --upgrade pip
 
-COPY django-aws-backend/requirements.txt /
+COPY requirements.txt /
 RUN pip install --no-cache-dir -r /requirements.txt
 
 WORKDIR /app
-COPY django-aws-backend /app
+COPY . /app
 # COPY django-aws-frontend/build /django-aws-frontend/build
 # RUN python manage.py collectstatic --noinput
 
