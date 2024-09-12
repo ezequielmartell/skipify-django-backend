@@ -21,19 +21,10 @@ def signup_view(request):
     password = data.get('password')
     email = data.get('email').lower()
 
-    # if password is None or password == "" or email is None or email == "":
-    #     return Response({'message': 'Please provide email, username, and password.'}, status=400)
-
     try:
         validate_email(email)
     except ValidationError as error:
         return Response({'message': error}, status=400)
-
-    # if CustomUser.objects.filter(username = username):
-    #     return Response({'message': 'Username already exists.'}, status=400)
-    
-    # if CustomUser.objects.filter(email = email):
-    #     return Response({'message': 'Email already exists.'}, status=400)
     
     if len(password) < 8:
         return Response({'message': 'Password must be at least 8 characters.'}, status=400)
@@ -44,7 +35,6 @@ def signup_view(request):
         return Response({'message': f"Error creating user: {error}"}, status=400)
 
     login(request, user)
-    # send_mail('Subject here', 'Here is the message.', 'from@example.com', ['to@example.com'], fail_silently=False)
     send_mail(
         subject='Welcome to Skipify!', 
         message="Thank you for signing up! We are excited to have you on board.\n"
@@ -60,12 +50,10 @@ def signup_view(request):
 
 @api_view(['POST'])
 def login_view(request):
-    # data = json.loads(request.data)
     data = request.data
     email = data.get('email')
     password = data.get('password')
-    # if email is None or email == "" or password is None or password == "":
-    #     return Response({'message': 'Please provide username and password.'}, status=400)
+        
     try:
         user = authenticate(username=email, password=password)
     except Exception as error:
@@ -144,27 +132,27 @@ def boycott(request):
         'boycott': boycott
         })
 
-@api_view(['GET'])
-@authentication_classes([SessionAuthentication])
-@permission_classes([IsAuthenticated])
-def spotifyAuth(request):
-    # redirect_uri can be guessed, so let's generate
-    # a random `state` string to prevent csrf forgery.
-    state = ''.join(
-        secrets.choice(string.ascii_uppercase + string.digits) for _ in range(16)
-    )
-    payload = {
-            'client_id': spotify.CLIENT_ID,
-            'response_type': 'code',
-            'redirect_uri': spotify.REDIRECT_URI,
-            'state': state,
-            'scope': spotify.scope
-        }
-    url = f'{spotify.AUTH_URL}/?{urlencode(payload)}'
-    # frontend will need to redirect to this url
-    return Response({
-        'response': url
-    })
+# @api_view(['GET'])
+# @authentication_classes([SessionAuthentication])
+# @permission_classes([IsAuthenticated])
+# def spotifyAuth(request):
+#     # redirect_uri can be guessed, so let's generate
+#     # a random `state` string to prevent csrf forgery.
+#     state = ''.join(
+#         secrets.choice(string.ascii_uppercase + string.digits) for _ in range(16)
+#     )
+#     payload = {
+#             'client_id': spotify.CLIENT_ID,
+#             'response_type': 'code',
+#             'redirect_uri': spotify.REDIRECT_URI,
+#             'state': state,
+#             'scope': spotify.scope
+#         }
+#     url = f'{spotify.AUTH_URL}/?{urlencode(payload)}'
+#     # frontend will need to redirect to this url
+#     return Response({
+#         'response': url
+#     })
 
 
 @api_view(['POST'])
@@ -185,31 +173,9 @@ def callback(request):
 def me(request):
     user = CustomUser.objects.get(id=request.user.id)
     if (user.refresh_token):
-        tokens = {
-            'access_token': user.access_token,
-            'refresh_token': user.refresh_token
-        }
-        # Get profile info
-        headers = {'Authorization': f"Bearer {tokens.get('access_token')}"}
-        response = requests.get(spotify.ME_URL, headers=headers)
-        while response.status_code != 200:
-            headers = {'Authorization': f"Bearer {tokens.get('access_token')}"}
-            response = requests.get(spotify.ME_URL, headers=headers)
-            match response.status_code:
-                case 200:
-                    pass
-                case 401:
-                    # do refresh actions here
-                    tokens = spotify.refresh(id=user.id, refresh_token=tokens.get('refresh_token'))
-                case 429:
-                    print("****************************************RATELIMIT")
-                    time.sleep(1)
-                case _:
-                    print(f"****************************************{response.status_code} error, unable to proceed")
-        res_data = response.json()
+        tokens = spotify.refresh(id=user.id, refresh_token=user.refresh_token)
         return Response({ 
-            'data': res_data, 
-            'artists': user.bad_artists 
+            'data': tokens.access_token,
             })
     else:
         return Response({
