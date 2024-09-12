@@ -179,5 +179,6 @@ def me(request):
             })
     else:
         return Response({
-        'error': 404
+        'error': 404,
+        'data': 'No refresh token found. Unable to provide access token.'
         })
