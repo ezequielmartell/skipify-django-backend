@@ -53,7 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django_aws.middleware.health_check_middleware',
     'django.middleware.security.SecurityMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -146,7 +146,7 @@ USE_TZ = True
 
 # # STATIC_URL = 'static/'
 STATIC_URL = '/static/'
-# # STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "static"
 # STATICFILES_DIRS = (
 #     FRONTEND_DIR.joinpath('build/static'),  # new
 # )
