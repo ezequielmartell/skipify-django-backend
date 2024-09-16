@@ -10,28 +10,50 @@ permissions:
         contents: read  # This is required for actions/checkout
 
 jobs:
-  Deployment:
-      name: Deployment
-      runs-on: ubuntu-latest
-      steps:
+  # Build_and_Push:
+  #     name: Build_and_Push
+  #     runs-on: ubuntu-latest
+  #     steps:
       
-      - name: Checkout repo
-        uses: actions/checkout@v3
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+  #       with:
+  #         role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
+  #         aws-region: us-east-2
+
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v2
+
+  #     - name: Build, tag, and push docker image to Amazon ECR
+  #       env:
+  #         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #         REPOSITORY: django-aws-backend
+  #       run: |
+  #         docker build -t $REGISTRY/$REPOSITORY .
+  #         docker push $REGISTRY/$REPOSITORY
+  TF_Apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    steps:
+      # this is where i need to clone the terraform repo and run terraform plan/apply
+      # or maybe I can create an action in the TF repo that does this and call it here?
+      - name: TF Plan
+        run: echo "Terraform Plan"
+      - name: TF Apply
+        run: echo "Terraform Apply"
+    # This part here is cloning a second repository
+    # While cloning the repository:
+    #   - it clones the repo into the given `path`
+    #   - it checks out the branch defined at `ref`
+      - name: Clone infrastructure repository
+        uses: actions/checkout@v2
         with:
-          role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
-          aws-region: us-east-2
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: django-aws-backend
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY .
-          docker push $REGISTRY/$REPOSITORY
+          repository: ezequielmartell/skipify-aws-infrastructure
+          path: tf
+          ref: main
+      - run: |
+          ls ${{ github.workspace }}
