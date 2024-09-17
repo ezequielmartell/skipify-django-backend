@@ -11,7 +11,7 @@ This is pet project of mine to automate skipping songs by boycotted artists in S
 
 ## Usage
 
-- Access the application at `https://skipify.ezdoes.xyz` (registration page is in progress)
+- Access the application at `https://skipify.ezdoes.xyz`
 
 ## Contributing
 
