@@ -182,3 +182,9 @@ def me(request):
         'error': 404,
         'data': 'No refresh token found. Unable to provide access token.'
         })
+    
+@api_view(['GET'])
+def deployment(request):
+    return Response({
+        'data': 'old message here'
+    })
