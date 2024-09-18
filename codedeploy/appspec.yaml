@@ -1,0 +1,15 @@
+applicationName: 'backend_deployment'
+deploymentGroupName: 'backend-deploy-group'
+revision:
+  revisionType: AppSpecContent
+  appSpecContent:
+    content: |
+      version: 0.0
+      Resources:
+        - TargetService:
+            Type: AWS::ECS::Service
+            Properties:
+              TaskDefinition: "arn:aws:ecs:us-east-2:637423655132:task-definition/backend-web"
+              LoadBalancerInfo:
+                ContainerName: "prod-backend-web"
+                ContainerPort: 8000

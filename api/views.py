@@ -182,3 +182,10 @@ def me(request):
         'error': 404,
         'data': 'No refresh token found. Unable to provide access token.'
         })
+
+# I want to sort this to disable cors here or maybe i should just disable cors for the whole thing.  
+# @api_view(['GET'])
+# def deployment(request):
+#     return Response({
+#         'data': 'old message here'
+#     })
