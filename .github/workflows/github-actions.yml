@@ -57,3 +57,4 @@ jobs:
         - run: |
             echo "Creating deployment for Backend Service"
             aws deploy create-deployment --cli-input-yaml file://codedeploy/appspec.yaml
+         # need to add something here that bounces the beat and worker services
