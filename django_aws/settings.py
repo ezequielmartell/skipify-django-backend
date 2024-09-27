@@ -31,10 +31,9 @@ if env_path.is_file():
 SECRET_KEY = env("SECRET_KEY", default="ewfi83f2ofee3398fh2ofno24f")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG", cast=bool, default=True)
+DEBUG = env("DEBUG", cast=bool, default=False)
 
 ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOSTS", default="*")]
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -83,17 +82,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_aws.wsgi.application'
 
-CSRF_COOKIE_SAMESITE = 'Strict'
-SESSION_COOKIE_SAMESITE = 'Strict'
+if DEBUG:
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+else:
+    CSRF_COOKIE_SAMESITE = 'Strict'
+    SESSION_COOKIE_SAMESITE = 'Strict'
+
 CSRF_COOKIE_HTTPONLY = False  # False since we will grab it via universal-cookies
 SESSION_COOKIE_HTTPONLY = True
+
+# CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 # PROD ONLY
 CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", default=False)
 SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", default=False)
 
-if os.environ.get("CSRF_TRUSTED_ORIGIN"):
-    CSRF_TRUSTED_ORIGINS = [os.environ.get("CSRF_TRUSTED_ORIGIN")]
+if "CSRF_TRUSTED_ORIGINS" in os.environ:
+    CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
+# print(CSRF_TRUSTED_ORIGINS)
+
+if "CORS_ALLOWED_ORIGINS" in os.environ:
+    CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS").split(",")
+# print(CORS_ALLOWED_ORIGINS)
+
+CORS_ORIGIN_ALLOW_ALL = DEBUG
+CORS_ALLOW_CREDENTIALS = DEBUG
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

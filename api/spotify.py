@@ -39,7 +39,7 @@ def authorizecode(id, code):
     }
     res = requests.post(TOKEN_URL, auth=(CLIENT_ID, CLIENT_SECRET), data=payload)
     res_data = res.json()
-    
+    print(res_data)
     user = CustomUser.objects.get(id=id)
     user.refresh_token = res_data.get('refresh_token')
     user.access_token = res_data.get('access_token')

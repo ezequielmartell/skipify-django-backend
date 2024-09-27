@@ -87,6 +87,7 @@ def session_view(request):
 @permission_classes([IsAuthenticated])
 def artists(request):
     ''' Handles the artist portion of this service.'''
+    print(f"request user: {request.user.id}")
     user = CustomUser.objects.get(id=request.user.id)
     artists = user.bad_artists
     if request.method == 'POST':
@@ -175,17 +176,10 @@ def me(request):
     if (user.refresh_token):
         tokens = spotify.refresh(id=user.id, refresh_token=user.refresh_token)
         return Response({ 
-            'data': tokens.access_token,
+            'data': tokens.get('access_token'),
             })
     else:
         return Response({
         'error': 404,
         'data': 'No refresh token found. Unable to provide access token.'
         })
-
-# I want to sort this to disable cors here or maybe i should just disable cors for the whole thing.  
-# @api_view(['GET'])
-# def deployment(request):
-#     return Response({
-#         'data': 'old message here'
-#     })
