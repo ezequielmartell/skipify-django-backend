@@ -11,9 +11,19 @@ permissions:
 
 jobs:
   deploy_infra:
-    uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
-    with:
-      sha: ${{ github.sha }}
+    name: Create Deployment
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Check out my other private repo
+      uses: actions/checkout@master
+      with:
+        repository: ezequielmartell/skipify-aws-infrastructure
+
+    - name: Deploy Infrastructure
+      uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
+      with:
+        sha: ${{ github.sha }}
 
   build:
       name: Build and Push
