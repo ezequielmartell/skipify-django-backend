@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   deploy_infra:
-    uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml
+    uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
 
