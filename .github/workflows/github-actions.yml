@@ -1,5 +1,5 @@
-name: GitHub Actions
-run-name: ${{ github.actor }} merged to main. Building and pushing docker image to Amazon ECR.
+name: Build and Deploy
+run-name: Build and Deploy container to ECS ${{ github.actor }}
 on:
   push:
     branches:
@@ -10,6 +10,11 @@ permissions:
         contents: read  # This is required for actions/checkout
 
 jobs:
+  deploy_infra:
+    uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml
+    with:
+      sha: ${{ github.sha }}
+
   build:
       name: Build and Push
       runs-on: ubuntu-latest
