@@ -10,20 +10,7 @@ permissions:
         contents: read  # This is required for actions/checkout
 
 jobs:
-  # prep_infra:
-  #   name: Prep Infrastructure
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out my other private repo
-  #       uses: actions/checkout@master
-  #       with:
-  #         repository: ezequielmartell/skipify-aws-infrastructure
-  #     - run: echo "This is the infra repo i hope"
-  #     - run: |
-  #         ls
-
   deploy_infra:
-    # needs: prep_infra
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
