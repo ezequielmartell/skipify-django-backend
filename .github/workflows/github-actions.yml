@@ -11,25 +11,25 @@ permissions:
 
 jobs:
   
-  gather_secrets:
-    name: Gather Secrets
-    runs-on: ubuntu-latest
-    steps:
+  # gather_secrets:
+  #   name: Gather Secrets
+  #   runs-on: ubuntu-latest
+  #   steps:
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
-        with:
-          role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
-          aws-region: us-east-2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+  #       with:
+  #         role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
+  #         aws-region: us-east-2
 
-      - name: Step name
-        uses: aws-actions/aws-secretsmanager-get-secrets@v2
-        with:
-          secret-ids: |
-            TF-VAR-prod*
+  #     - name: Step name
+  #       uses: aws-actions/aws-secretsmanager-get-secrets@v2
+  #       with:
+  #         secret-ids: |
+  #           TF-VAR-prod*
 
   deploy_infra:
-    needs: gather_secrets
+    # needs: gather_secrets
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
