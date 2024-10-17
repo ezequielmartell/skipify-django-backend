@@ -49,6 +49,7 @@ jobs:
           echo "#######  Pushing image to Amazon ECR  ######"
           echo "############################################"
           docker push $REGISTRY/$REPOSITORY
+          
   deploy:
     name: Create Deployment
     runs-on: ubuntu-latest
