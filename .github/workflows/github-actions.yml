@@ -13,7 +13,6 @@ jobs:
   
   deploy_infra:
     name: Trigger Infrastructure Deployment Workflow
-    # needs: gather_secrets
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
