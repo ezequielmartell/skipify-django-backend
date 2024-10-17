@@ -26,12 +26,7 @@ jobs:
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
           secret-ids: |
-            TF_VAR_prod_rds_password, TF-VAR-prod-rds-password
-            TF_VAR_prod_backend_secret_key, TF-VAR-prod-backend-secret-key
-            TF_VAR_prod_sendgrid_api_key, TF-VAR-prod-sendgrid-api-key
-            TF_VAR_prod_client_id, TF-VAR-prod-client-id
-            TF_VAR_prod_client_secret, TF-VAR-prod-client-secret
-            TF_VAR_prod_redirect_uri, TF-VAR-prod-redirect-uri
+            TF-VAR-prod*
 
   deploy_infra:
     needs: gather_secrets
