@@ -10,7 +10,31 @@ permissions:
         contents: read  # This is required for actions/checkout
 
 jobs:
+  
+  gather_secrets:
+    name: Gather Secrets
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+        with:
+          role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
+          aws-region: us-east-2
+
+      - name: Step name
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2
+        with:
+          secret-ids: |
+            TF_VAR_prod_rds_password, TF-VAR-prod-rds-password
+            TF_VAR_prod_backend_secret_key, TF-VAR-prod-backend-secret-key
+            TF_VAR_prod_sendgrid_api_key, TF-VAR-prod-sendgrid-api-key
+            TF_VAR_prod_client_id, TF-VAR-prod-client-id
+            TF_VAR_prod_client_secret, TF-VAR-prod-client-secret
+            TF_VAR_prod_redirect_uri, TF-VAR-prod-redirect-uri
+
   deploy_infra:
+    needs: gather_secrets
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
@@ -23,12 +47,6 @@ jobs:
       
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
-        with:
-          role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
-          aws-region: us-east-2
 
       - name: Login to Amazon ECR
         id: login-ecr
