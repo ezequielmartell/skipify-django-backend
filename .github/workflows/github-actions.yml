@@ -40,15 +40,16 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: django-aws-backend
+          SHA: ${{ github.sha }}
         run: |
           echo "############################################"
           echo "#######        Building Image         ######"
           echo "############################################"
-          docker build -t $REGISTRY/$REPOSITORY .
+          docker build -t $REGISTRY/$REPOSITORY:$SHA .
           echo "############################################"
           echo "#######  Pushing image to Amazon ECR  ######"
           echo "############################################"
-          docker push $REGISTRY/$REPOSITORY
+          docker push $REGISTRY/$REPOSITORY:$SHA
       
       - name: Test Infra outputs
         run: |
