@@ -13,3 +13,26 @@ revision:
               LoadBalancerInfo:
                 ContainerName: "prod-backend-web"
                 ContainerPort: 8000
+
+
+# aws deploy create-deployment \
+#     --application-name 'backend_deployment' \
+#     --deployment-group-name 'backend-deploy-group' \
+#     --revision '{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":{\"version\":0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"arn:aws:ecs:us-east-2:637423655132:task-definition\/backend-web\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}}}'
+
+
+#     {\"version\":0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"arn:aws:ecs:us-east-2:637423655132:task-definition\/backend-web\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}
+
+# aws deploy create-deployment --cli-input-json '{
+# "applicationName": "backend_deployment",
+# "deploymentGroupName": "backend-deploy-group",
+# "revision": {
+#   "revisionType": "AppSpecContent",
+#   "appSpecContent": {
+#     "content": "{\n  \"version\": 0.0,\n  \"Resources\": [\n    {\n      \"TargetService\": {\n        \"Type\": \"AWS::ECS::Service\",\n        \"Properties\": {\n          \"TaskDefinition\": \"arn:aws:ecs:us-east-2:637423655132:task-definition/backend-web\",\n          \"LoadBalancerInfo\": {\n            \"ContainerName\": \"prod-backend-web\",\n            \"ContainerPort\": 8000\n          }\n        }\n      }\n    }\n  ]\n}"
+#   }
+# }
+# }'
+
+
+# aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\n\"version\":0.0,\n\"Resources\":[\n{\n\"TargetService\":{\n\"Type\":\"AWS::ECS::Service\",\n\"Properties\":{\n\"TaskDefinition\":\"arn:aws:ecs:us-east-2:637423655132:task-definition/backend-web\",\n\"LoadBalancerInfo\":{\n\"ContainerName\":\"prod-backend-web\",\n\"ContainerPort\":8000\n}\n}\n}\n}\n]\n}"}}}'

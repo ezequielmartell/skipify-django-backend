@@ -49,6 +49,9 @@ jobs:
           echo "#######  Pushing image to Amazon ECR  ######"
           echo "############################################"
           docker push $REGISTRY/$REPOSITORY
+      
+      - name: Test Infra outputs
+        run: echo ${{ steps.deploy_infra.outputs }}
 
   deploy:
     name: Create Deployment
@@ -65,6 +68,6 @@ jobs:
             aws-region: us-east-2
         - run: |
             echo "Creating deployment for Backend Service"
-            aws deploy create-deployment --cli-input-yaml file://codedeploy/appspec.yaml
-            
-         # need to add something here that bounces the beat and worker services
+            aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\"version\":0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"arn:aws:ecs:us-east-2:637423655132:task-definition/backend-web\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}"}}}'           
+        # '$VAR HERE FOR TASK DEF'
+        # need to add something here that bounces the beat and worker services
