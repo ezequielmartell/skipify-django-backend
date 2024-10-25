@@ -51,7 +51,7 @@ jobs:
           docker push $REGISTRY/$REPOSITORY
       
       - name: Test Infra outputs
-        run: echo ${{ steps.deploy_infra.outputs }}
+        run: echo ${{ needs.deploy_infra.outputs.task_def_arn_backend }} ${{ needs.deploy_infra.outputs.task_def_arn_frontend }}
 
   deploy:
     name: Create Deployment
