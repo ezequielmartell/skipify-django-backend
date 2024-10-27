@@ -10,7 +10,6 @@ permissions:
         contents: read  # This is required for actions/checkout
 
 jobs:
-  
   deploy_infra:
     name: Trigger Infrastructure Deployment Workflow
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
