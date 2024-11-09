@@ -15,6 +15,7 @@ jobs:
     uses: ezequielmartell/skipify-aws-infrastructure/.github/workflows/deploy_infra.yml@main
     with:
       sha: ${{ github.sha }}
+      type: "backend"
 
   build:
       name: Build and Push
