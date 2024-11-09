@@ -75,6 +75,6 @@ jobs:
           env:
             TASK_DEF: ${{ needs.deploy_infra.outputs.task_def_arn }}
           run: |
-            echo "Creating deployment for Backend Service"
+            echo "Creating deployment for backend service."
             aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\"version\":0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"'$TASK_DEF'\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}"}}}'           
         # need to add something here that bounces the beat and worker services
