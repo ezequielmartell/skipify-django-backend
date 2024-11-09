@@ -50,11 +50,6 @@ jobs:
           echo "#######  Pushing image to Amazon ECR  ######"
           echo "############################################"
           docker push $REGISTRY/$REPOSITORY:$SHA
-      
-      - name: Test Infra outputs
-        run: |
-          echo ${{ needs.deploy_infra.outputs }}
-          echo ${{ needs.deploy_infra.outputs.task_def_arn }} 
 
   deploy:
     name: Create Deployment
@@ -72,9 +67,7 @@ jobs:
             role-to-assume: arn:aws:iam::637423655132:role/github-actions_role
             aws-region: us-east-2
         - name: CLI Deployment
-          env:
-            TASK_DEF: ${{ needs.deploy_infra.outputs.task_def_arn }}
           run: |
             echo "Creating deployment for backend service."
-            aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\"version\":0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"'$TASK_DEF'\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}"}}}'           
+            aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\"version\":0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"'${{ needs.deploy_infra.outputs.task_def_arn }}'\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}"}}}'           
         # need to add something here that bounces the beat and worker services
