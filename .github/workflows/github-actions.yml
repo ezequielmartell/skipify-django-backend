@@ -54,7 +54,7 @@ jobs:
       - name: Test Infra outputs
         run: |
           echo ${{ needs.deploy_infra.outputs }}
-          echo ${{ needs.deploy_infra.outputs.task_def_arn_backend }} 
+          echo ${{ needs.deploy_infra.outputs.task_def_arn }} 
 
   deploy:
     name: Create Deployment
@@ -73,7 +73,7 @@ jobs:
             aws-region: us-east-2
         - name: CLI Deployment
           env:
-            TASK_DEF: ${{ needs.deploy_infra.outputs.task_def_arn_backend }}
+            TASK_DEF: ${{ needs.deploy_infra.outputs.task_def_arn }}
           run: |
             echo "Creating deployment for Backend Service"
             aws deploy create-deployment --cli-input-json '{"applicationName":"backend_deployment","deploymentGroupName":"backend-deploy-group","revision":{"revisionType":"AppSpecContent","appSpecContent":{"content":"{\"version\":0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"'$TASK_DEF'\",\"LoadBalancerInfo\":{\"ContainerName\":\"prod-backend-web\",\"ContainerPort\":8000}}}}]}"}}}'           
