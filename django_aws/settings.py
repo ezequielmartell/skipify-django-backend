@@ -109,17 +109,6 @@ if "CORS_ALLOWED_ORIGINS" in os.environ:
 CORS_ORIGIN_ALLOW_ALL = DEBUG
 CORS_ALLOW_CREDENTIALS = DEBUG
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     # 'default': env.db()
     'default': env.db(default="sqlite:///db.sqlite3")
