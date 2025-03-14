@@ -29,10 +29,9 @@ PLAYER_URL = 'https://api.spotify.com/v1/me/player'
 
 @celery.app.task()
 def sync_boycott_tasks():
-    users = CustomUser.objects.all()
-    for user in users:
-        if user.boycott_active:
-            minute_skipping_task.delay(user.id)
+    users = CustomUser.objects.filter(boycott_active=True).values_list('id', flat=True)
+    print(f"Starting boycott tasks for users: {users}")
+    [minute_skipping_task.delay(user_id) for user_id in users]
 
 
 @celery.app.task()
@@ -99,7 +98,7 @@ def minute_skipping_task(user_id):
                 print(f"User: {user.id} - RATELIMIT")
                 time.sleep(1)
             case _:
-                print(f"User: {user.id} - {response.status_code} error, unable to proceed")
+                print(f"User: {user.id} - {response.status_code} error, unable to proceed -- {response.content}")
 
 
 @celery.app.task()
