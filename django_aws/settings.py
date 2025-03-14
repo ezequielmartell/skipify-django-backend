@@ -161,7 +161,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="sqs://test:test@sqs:9324")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="sqs://test:test@localhost:9324")
 CELERY_TASK_DEFAULT_QUEUE = env("CELERY_TASK_DEFAULT_QUEUE", default="default")
 CELERY_IMPORTS = (
 'django_aws.tasks',
