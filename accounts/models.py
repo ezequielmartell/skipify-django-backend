@@ -1,16 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
-# class CustomUser(AbstractUser):
-#     # code_challenge = models.CharField(max_length=128)
-#     email = models.EmailField(unique=True)
-#     refresh_token = models.CharField(max_length=500, blank=True)
-#     access_token = models.CharField(max_length=500, blank=True)
-#     bad_artists = models.JSONField(blank=True, default=list)
-#     boycott_active = models.BooleanField(default=False)
-
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None):
         """
@@ -79,3 +69,8 @@ class CustomUser(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+
+class TaskLock(models.Model):
+    task_name = models.CharField(max_length=255, unique=True)
+    is_locked = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)

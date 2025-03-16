@@ -1,8 +1,9 @@
 import logging
 import time
-
 from django_aws import celery
-from accounts.models import CustomUser
+from accounts.models import CustomUser, TaskLock
+from django.db import transaction
+from django.utils.timezone import now, timedelta
 import time
 from pathlib import Path
 import environ
@@ -27,11 +28,28 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 PLAYER_URL = 'https://api.spotify.com/v1/me/player'
 
 
-@celery.app.task()
-def sync_boycott_tasks():
-    users = CustomUser.objects.filter(boycott_active=True).values_list('id', flat=True)
-    print(f"Starting boycott tasks for users: {users}")
-    [minute_skipping_task.delay(user_id) for user_id in users]
+@celery.app.task(bind=True)
+def sync_boycott_tasks(self):
+    lock_task_name = "sync_boycott_tasks"
+    try:
+        with transaction.atomic():
+            lock, created = TaskLock.objects.get_or_create(task_name=lock_task_name)
+            if lock.is_locked:
+                logging.info(f"{lock_task_name} is already running, requeuing.")
+                self.apply_async(countdown=3)  # Requeue in 3 seconds
+                return
+            logging.info(f"Acquiring lock for {lock_task_name}")
+            lock.is_locked = True
+            lock.save()
+
+        users = CustomUser.objects.filter(boycott_active=True).values_list('id', flat=True)
+        logging.info(f"Starting boycott tasks for users: {users}")
+        [minute_skipping_task.delay(user_id) for user_id in users]
+
+    finally:
+        # Release the lock after completion or failure
+        logging.info(f"Releasing lock for {lock_task_name}")
+        TaskLock.objects.filter(task_name=lock_task_name).update(is_locked=False)
 
 
 @celery.app.task()
@@ -56,7 +74,7 @@ def minute_skipping_task(user_id):
         return res_data
     
     def skip_track(tokens):
-        print(f"User: {user.id} - skipping track!")
+        logging.info(f"User: {user.id} - skipping track!")
         headers = {
     "Authorization": f"Bearer {tokens['access_token']}"
 }
@@ -67,7 +85,7 @@ def minute_skipping_task(user_id):
         'access_token': user.access_token,
         'refresh_token': user.refresh_token
     }
-    time_end = time.time() + 60 * 1
+    time_end = time.time() + 15
     while time.time() < time_end:
         headers = {
     "Authorization": f"Bearer {tokens['access_token']}"
@@ -77,38 +95,29 @@ def minute_skipping_task(user_id):
         # match 429:
             case 200:
                 currentSong = response.json()
-                # print(f"User: {user.id} - {currentSong.get('item').get('name')})
                 current_artists = [artist.get('name') for artist in currentSong.get('item').get('artists')]
-                # print(f"User: {user.id} - current artists: {current_artists}")
-                # print(f"User: {user.id} - user boycott artists: {user.bad_artists}")
                 artist_test = any(artist in user.bad_artists for artist in current_artists)
-                # print(f"User: {user.id} - Boycotting one of {current_artists}? {artist_test}")
+                # logging.info(f"User: {user.id} - Boycotting one of {current_artists}? {artist_test}")
                 if artist_test:
                     skip_track(tokens=tokens)
-                    print(f"User: {user.id} - Boycotting one of {current_artists}")
+                    logging.info(f"User: {user.id} - Boycotting one of {current_artists}")
                 time.sleep(3)
             case 204:
-                # print(f"User: {user.id} - No Content to Display")
+                logging.debug(f"User: {user.id} - No Content to Display")
                 time.sleep(10)
             case 401:
                 # do refresh actions here
-                # print(f"User: {user.id} - refreshing token")
+                logging.info(f"User: {user.id} - refreshing token")
                 tokens = refresh(id=user_id, refresh_token=tokens.get('refresh_token'))
             case 429:
-                print(f"User: {user.id} - RATELIMIT")
+                logging.info(f"User: {user.id} - RATELIMIT")
                 time.sleep(1)
             case _:
-                print(f"User: {user.id} - {response.status_code} error, unable to proceed -- {response.content}")
-
-
-@celery.app.task()
-def web_task() -> None:
-    logging.info("Starting web task...")
-    time.sleep(10)
-    logging.info("Done web task.")
+                logging.info(f"User: {user.id} - {response.status_code} error, unable to proceed -- {response.content}")
+                time.sleep(10)
 
 @celery.app.task()
-def beat_task() -> None:
-    logging.info("Starting beat task...")
-    time.sleep(10)
-    logging.info("Done beat task.")
+def beat_test():
+    logging.info("Beat test task running")
+    time.sleep(5)
+    logging.info("Beat test task finished")

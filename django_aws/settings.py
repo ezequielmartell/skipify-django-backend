@@ -171,10 +171,10 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 }
 
 CELERY_BEAT_SCHEDULE = {
-    "beat_task": {
+    "start_boycott": {
         "task": "django_aws.tasks.sync_boycott_tasks",
-        "schedule": 60.0,
-    },
+        "schedule": 15.0,
+    }
 }
 
 EMAIL_HOST = 'smtp.sendgrid.net'
