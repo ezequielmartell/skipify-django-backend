@@ -1,5 +1,4 @@
 import logging
-import time
 from django_aws import celery
 from accounts.models import CustomUser, TaskLock
 from django.db import transaction
@@ -31,29 +30,34 @@ PLAYER_URL = 'https://api.spotify.com/v1/me/player'
 @celery.app.task(bind=True)
 def sync_boycott_tasks(self):
     lock_task_name = "sync_boycott_tasks"
+    acquired_lock = False
     try:
         with transaction.atomic():
-            lock, created = TaskLock.objects.get_or_create(task_name=lock_task_name)
-            if lock.is_locked:
+            lock, created = TaskLock.objects.get_or_create(task_name=lock_task_name,defaults={'timeout': 10})
+            if lock.is_locked and not lock.has_timed_out():
                 logging.info(f"{lock_task_name} is already running, requeuing.")
                 self.apply_async(countdown=3)  # Requeue in 3 seconds
                 return
             logging.info(f"Acquiring lock for {lock_task_name}")
             lock.is_locked = True
+            lock.locked_at = now()
             lock.save()
+
+            acquired_lock = True 
 
         users = CustomUser.objects.filter(boycott_active=True).values_list('id', flat=True)
         logging.info(f"Starting boycott tasks for users: {users}")
-        [minute_skipping_task.delay(user_id) for user_id in users]
+        [monitoring_playback_task.delay(user_id) for user_id in users]
 
     finally:
-        # Release the lock after completion or failure
-        logging.info(f"Releasing lock for {lock_task_name}")
-        TaskLock.objects.filter(task_name=lock_task_name).update(is_locked=False)
+        if acquired_lock:
+            # Release the lock after completion or failure if acquired
+            logging.info(f"Releasing lock for {lock_task_name}")
+            TaskLock.objects.filter(task_name=lock_task_name).update(is_locked=False)
 
 
 @celery.app.task()
-def minute_skipping_task(user_id):
+def monitoring_playback_task(user_id):
     def refresh(id, refresh_token):
         '''Refresh access token.'''
         payload = {
@@ -76,48 +80,81 @@ def minute_skipping_task(user_id):
     def skip_track(tokens):
         logging.info(f"User: {user.id} - skipping track!")
         headers = {
-    "Authorization": f"Bearer {tokens['access_token']}"
-}
+            "Authorization": f"Bearer {tokens['access_token']}"
+        }
         response = requests.post(f"{PLAYER_URL}/next", headers=headers)
+        return response
 
-    user = CustomUser.objects.get(id=user_id)
-    tokens = {
-        'access_token': user.access_token,
-        'refresh_token': user.refresh_token
-    }
-    time_end = time.time() + 15
-    while time.time() < time_end:
-        headers = {
-    "Authorization": f"Bearer {tokens['access_token']}"
-}
-        response = requests.get(PLAYER_URL, headers=headers)
-        match response.status_code:
-        # match 429:
-            case 200:
-                currentSong = response.json()
-                current_artists = [artist.get('name') for artist in currentSong.get('item').get('artists')]
-                artist_test = any(artist in user.bad_artists for artist in current_artists)
-                # logging.info(f"User: {user.id} - Boycotting one of {current_artists}? {artist_test}")
-                if artist_test:
-                    skip_track(tokens=tokens)
-                    logging.info(f"User: {user.id} - Boycotting one of {current_artists}")
-                time.sleep(3)
-            case 204:
-                logging.debug(f"User: {user.id} - No Content to Display")
-                time.sleep(10)
-            case 401:
-                # do refresh actions here
-                logging.info(f"User: {user.id} - refreshing token")
-                tokens = refresh(id=user_id, refresh_token=tokens.get('refresh_token'))
-            case 429:
-                logging.info(f"User: {user.id} - RATELIMIT")
-                time.sleep(1)
-            case _:
-                logging.info(f"User: {user.id} - {response.status_code} error, unable to proceed -- {response.content}")
-                time.sleep(10)
+    lock_task_name = f"{user_id}_monitoring_playback_task"
+    acquired_lock = False
+    try:
+        with transaction.atomic():
+            lock, created = TaskLock.objects.get_or_create(task_name=lock_task_name, defaults={'timeout': 35})
+            if lock.is_locked and not lock.has_timed_out():
+                logging.info(f"{lock_task_name} is already running, skipping execution.")
+                return
+            
+            logging.info(f"Acquiring lock for {lock_task_name}")
+            lock.is_locked = True
+            lock.locked_at = now()
+            lock.save()
+
+            acquired_lock = True 
+
+        user = CustomUser.objects.get(id=user_id)
+        tokens = {
+            'access_token': user.access_token,
+            'refresh_token': user.refresh_token
+        }
+        time_end = now() + timedelta(seconds=15)
+        while now() < time_end and user.boycott_active:
+            headers = {
+            "Authorization": f"Bearer {tokens['access_token']}"
+            }
+            response = requests.get(PLAYER_URL, headers=headers)
+
+            match response.status_code:
+            # match 429:
+                case 200:
+                    currentSong = response.json()
+                    current_artists = [artist.get('name') for artist in currentSong.get('item').get('artists')]
+                    artist_test = any(artist in user.bad_artists for artist in current_artists)
+                    # logging.info(f"User: {user.id} - Boycotting one of {current_artists}? {artist_test}")
+                    if artist_test:
+                        skip_track(tokens=tokens)
+                        logging.info(f"User: {user.id} - Boycotting one of {current_artists}")
+                    time.sleep(3)
+                case 204:
+                    logging.debug(f"User: {user.id} - No Content to Display")
+                    time.sleep(10)
+                case 401:
+                    # do refresh actions here
+                    logging.info(f"User: {user.id} - refreshing token")
+                    tokens = refresh(id=user_id, refresh_token=tokens.get('refresh_token'))
+                case 429:
+                    logging.info(f"User: {user.id} - RATELIMIT")
+                    time.sleep(1)
+                case _:
+                    logging.info(f"User: {user.id} - {response.status_code} error, unable to proceed -- {response.content}")
+                    return # end the loop if we get an unexpected status code
+
+    finally:
+        if acquired_lock:
+            # Release the lock after completion or failure if acquired
+            logging.info(f"Releasing lock for {lock_task_name}")
+            TaskLock.objects.filter(task_name=lock_task_name).update(is_locked=False)
 
 @celery.app.task()
-def beat_test():
-    logging.info("Beat test task running")
-    time.sleep(5)
-    logging.info("Beat test task finished")
+def beat_test(message_qty=10):
+    [
+        (
+            logging.info(f"task {i} of {message_qty} running"),
+            test_task.delay(i)
+        )
+        for i in range(message_qty)
+    ]
+
+@celery.app.task()
+def test_task(iteration):
+    logging.info(f"Test task {iteration} running")
+    time.sleep(2)

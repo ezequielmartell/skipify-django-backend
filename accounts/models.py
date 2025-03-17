@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.utils.timezone import now
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None):
@@ -73,4 +75,15 @@ class CustomUser(AbstractBaseUser):
 class TaskLock(models.Model):
     task_name = models.CharField(max_length=255, unique=True)
     is_locked = models.BooleanField(default=False)
+    locked_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
+    timeout = models.IntegerField(default=30)  # seconds
+
+    def __str__(self):
+        return self.task_name
+    
+    def has_timed_out(self): 
+        if self.locked_at and (now() - self.locked_at).total_seconds() > self.timeout:
+            return True
+        return False
+    
